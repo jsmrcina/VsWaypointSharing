@@ -1,0 +1,119 @@
+
+        // private WaypointMapLayer GetWaypointMapLayerOnClient()
+        // {
+        //     var mapManager = ClientApi.ModLoader.GetModSystem<WorldMapManager>();
+        //     return mapManager.MapLayers.FirstOrDefault(x => x.GetType() == typeof(WaypointMapLayer)) as WaypointMapLayer;
+        // }
+
+        // private void PurgeNonNativeOwnWaypoints()
+        // {
+        //     var waypointLayer = GetWaypointMapLayerOnClient();
+
+        //     foreach (Waypoint w in waypointLayer.ownWaypoints)
+        //     {
+        //         ClientApi.Logger.Notification($"Purging local waypoint: {w.Icon} {w.Position.X} {w.Position.Y} {w.Position.Z} {w.Pinned.ToString().ToLower()} {w.Title}");
+        //     }
+
+        //     // TODO
+        // }
+
+        // private void PurgeAllOwnWaypoints()
+        // {
+        //     var waypointLayer = GetWaypointMapLayerOnClient();
+
+        //     ClientApi.Logger.Notification($"Purging All");
+
+        //     foreach (Waypoint w in waypointLayer.ownWaypoints)
+        //     {
+        //         ClientApi.Logger.Notification($"Purging (all) local waypoint: {w.Icon} {w.Position.X} {w.Position.Y} {w.Position.Z} {w.Pinned.ToString().ToLower()} {w.Title}");
+        //     }
+
+        //     waypointLayer.ownWaypoints.Clear();
+        // }
+
+                    // Serialize to protobuf
+            // byte[] waypointsBytes = SerializerUtil.Serialize<List<Waypoint>>(waypoints);
+
+            // IServerPlayer[] players = new IServerPlayer[1] { fromPlayer };
+            // var spawn = ServerApi.World.DefaultSpawnPosition.XYZ;
+            // ServerChannel.SendPacket(new WaypointShareResponse()
+            // {
+            //     Message = waypointsBytes,
+            //     WorldSpawnPos = spawn
+            // }, players);
+
+                    // private void OnShareResponse(WaypointShareResponse networkMessage)
+        // {
+        //     var waypointsBytes = networkMessage.Message;
+        //     if (waypointsBytes == null)
+        //     {
+        //         return;
+        //     }
+
+        //     // PurgeAllOwnWaypoints();
+        //     var waypointLayer = GetWaypointMapLayerOnClient();
+
+        //     // Debug statements
+        //     List<Waypoint> waypoints = SerializerUtil.Deserialize<List<Waypoint>>(waypointsBytes);
+        //     foreach (Waypoint w in waypoints)
+        //     {
+        //         ClientApi.Logger.Notification($"Received waypoint from server: {networkMessage.WorldSpawnPos} {w.Icon} {w.Position.X} {w.Position.Y} {w.Position.Z} {w.Pinned.ToString().ToLower()} {w.Title}");
+        //     }
+
+        //     waypointLayer.OnDataFromServer(waypointsBytes);
+
+        //     // waypoints.ToList().ForEach(w =>
+        //     // {
+        //     //     
+        //     //     waypointLayer.ownWaypoints.Add(w);
+        //     //     // ClientApi.SendChatMessage($"/waypoint addati {w.Icon} {w.Position.X} {w.Position.Y} {w.Position.Z} {w.Pinned.ToString().ToLower()} {ColorUtil.Int2Hex(w.Color):X} {w.Title}");
+        //     // });
+
+        //     // ClientChannel.SendPacket(new WaypointImportResponse()
+        //     // {
+        //     //     Response = $"{waypoints.Count} waypoints added to map."
+        //     // });
+        // }
+
+        // private IList<Waypoint> GetWaypoints()
+        // {
+        //     // Copied from the Essentials mod lol
+        //     var waypoints = new List<Waypoint>();
+        //     if (ServerApi != null)
+        //     {
+        //         ClientApi
+
+        //         try
+        //         {
+        //             byte[] data = ServerApi.WorldManager.SaveGame.GetData("playerMapMarkers_v2");
+        //             if (data != null)
+        //             {
+        //                 waypoints = SerializerUtil.Deserialize<List<Waypoint>>(data);
+        //                 ServerApi.World.Logger.Notification("Successfully loaded " + waypoints.Count + " waypoints");
+        //             }
+        //             else
+        //             {
+        //                 data = ServerApi.WorldManager.SaveGame.GetData("playerMapMarkers");
+        //                 if (data != null) waypoints = JsonUtil.FromBytes<List<Waypoint>>(data);
+        //             }
+
+        //             for (int i = 0; i < waypoints.Count; i++)
+        //             {
+        //                 var wp = waypoints[i];
+        //                 if (wp.Title == null) wp.Title = wp.Text; // Not sure how this happenes. For some reason the title moved into text
+        //                 if (wp == null)
+        //                 {
+        //                     ServerApi.World.Logger.Error("Waypoint with no position loaded, will remove");
+        //                     waypoints.RemoveAt(i);
+        //                     i--;
+        //                 }
+        //             }
+        //         }
+        //         catch (Exception e)
+        //         {
+        //             ServerApi.World.Logger.Error("Failed deserializing player map markers. Won't load them, sorry! Exception thrown: ", e);
+        //         }
+        //         return waypoints;
+        //     }
+        //     return waypoints;
+        // }

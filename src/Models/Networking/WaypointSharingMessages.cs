@@ -12,14 +12,21 @@ namespace VsWaypointSharing.Models.Networking
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     public class WaypointShareMessage
     {
-        // TODO: Needed?
-        public string Request;
     }
 
-    // [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
-    // public class WaypointShareResponse
-    // {
-    //     public byte[] Message;
-    //     public Vec3d WorldSpawnPos;
-    // }
+    [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
+    public class WaypointRevertMessage
+    {
+    }
+
+    [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
+    public class WaypointToggleAutoSyncMessage
+    {
+    }
+
+    [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
+    public class WaypointResponseMessage
+    {
+        public bool isAutoSyncEnabled;
+    }
 }
