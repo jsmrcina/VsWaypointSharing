@@ -21,3 +21,6 @@ This mod is only possible because of the following projects:
 
 - https://github.com/EnigmaticaGH/VintageStoryMods
     - Published under GPL-2.0. This mod uses snippets of code from this repository, and thus, due to GPL-2.0 requirements is also licensed as GPL-2.0. The code is available at the link above.
+
+- https://github.com/p3t3rix-vsmods/VsProspectorInfo
+    - Published under MIT.

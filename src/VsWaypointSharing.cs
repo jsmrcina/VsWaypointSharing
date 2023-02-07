@@ -32,7 +32,7 @@ namespace VsWaypointSharing
             ClientApi = api ?? throw new ArgumentException("Client API is null");
 
             ClientChannel = api.Network.RegisterChannel(_waypointSharingChannel)
-                            .RegisterMessageType(typeof(WaypointShareMessage)));
+                            .RegisterMessageType(typeof(WaypointShareMessage));
             //.RegisterMessageType(typeof(WaypointShareResponse));
             //.SetMessageHandler<WaypointShareResponse>(OnShareResponse);
 
