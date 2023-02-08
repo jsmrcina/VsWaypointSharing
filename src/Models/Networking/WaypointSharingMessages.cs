@@ -23,10 +23,4 @@ namespace VsWaypointSharing.Models.Networking
     public class WaypointToggleAutoSyncMessage
     {
     }
-
-    [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
-    public class WaypointResponseMessage
-    {
-        public bool isAutoSyncEnabled;
-    }
 }
