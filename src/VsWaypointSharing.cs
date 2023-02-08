@@ -218,7 +218,7 @@ namespace VsWaypointSharing
                             // Prepare the arguments for calling AddWp
                             string playerName = ServerApi.PlayerData.GetPlayerDataByUid(w.OwningPlayerUid).LastKnownPlayername;
                             string color = "#" + (w.Color & 0xFFFFFF).ToString("X");
-                            string title = $"{_sharedWaypointPrefix} {playerName}> {w.Title}";
+                            string title = $"{_sharedWaypointPrefix} {playerName}>{w.Title}";
                             CmdArgs cArgs = new CmdArgs();
                             cArgs.PushSingle(title);
                             cArgs.PushSingle(color);
@@ -231,7 +231,7 @@ namespace VsWaypointSharing
                                     player = fromPlayer,
                                     groupId = -1, // TODO: GroupId correct here?
                                     icon = w.Icon,
-                                    pinned = w.Pinned
+                                    pinned = false // Do not pin other players' waypoints by default
                                 });
                         }
                     }
