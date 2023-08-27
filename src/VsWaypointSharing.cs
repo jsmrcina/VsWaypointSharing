@@ -57,7 +57,10 @@ namespace VsWaypointSharing
                             .RegisterMessageType(typeof(WaypointRevertMessage))
                             .RegisterMessageType(typeof(WaypointToggleAutoSyncMessage));
 
-            api.RegisterCommand("ws", "Functions for sharing waypoints", "[sync|revert|autosync]", OnCmdWs);
+            api.ChatCommands.GetOrCreate("ws").RequiresPrivilege(Privilege.chat)
+                .BeginSubCommand("sync").HandleWith(OnShare).EndSubCommand()
+                .BeginSubCommand("revert").HandleWith(OnRevert).EndSubCommand()
+                .BeginSubCommand("autosync").HandleWith(OnAutoSync).EndSubCommand();
         }
 
         public override void StartServerSide(ICoreServerAPI api)
@@ -95,26 +98,25 @@ namespace VsWaypointSharing
             }
         }
 
-        private void OnCmdWs(int groupId, CmdArgs args)
+        private TextCommandResult OnShare(TextCommandCallingArgs args)
         {
-            string cmd = args.PopWord();
+                ClientApi.SendChatMessage($"Requesting waypoints from server");
+                ClientChannel.SendPacket(new WaypointShareMessage());
+                return TextCommandResult.Success();
+        }
+        
+        private TextCommandResult OnRevert(TextCommandCallingArgs args)
+        {
+                ClientApi.SendChatMessage($"Reverting to only local waypoints");
+                ClientChannel.SendPacket(new WaypointRevertMessage());
+                return TextCommandResult.Success();
+        }
 
-            switch (cmd)
-            {
-                case "sync":
-                    ClientApi.SendChatMessage($"Requesting waypoints from server");
-                    ClientChannel.SendPacket(new WaypointShareMessage());
-                    break;
-
-                case "revert":
-                    ClientApi.SendChatMessage($"Reverting to only local waypoints");
-                    ClientChannel.SendPacket(new WaypointRevertMessage());
-                    break;
-                case "autosync":
-                    ClientApi.SendChatMessage($"Toggling auto-sync");
-                    ClientChannel.SendPacket(new WaypointToggleAutoSyncMessage());
-                    break;
-            }
+        private TextCommandResult OnAutoSync(TextCommandCallingArgs args)
+        {
+                ClientApi.SendChatMessage($"Toggling auto-sync");
+                ClientChannel.SendPacket(new WaypointToggleAutoSyncMessage());
+                return TextCommandResult.Success();
         }
 
         private void OnRevertRequested(IServerPlayer fromPlayer, WaypointRevertMessage msg)

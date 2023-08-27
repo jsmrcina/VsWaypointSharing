@@ -1,0 +1,1 @@
+copy bin\VsWaypointSharing.zip $env:appdata\VintageStory\Mods
