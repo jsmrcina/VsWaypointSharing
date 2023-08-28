@@ -12,6 +12,7 @@ namespace VsWaypointSharing.Models.Networking
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]
     public class WaypointShareMessage
     {
+        public bool LogSuccess = true;
     }
 
     [ProtoContract(ImplicitFields = ImplicitFields.AllPublic)]

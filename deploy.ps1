@@ -1,1 +1,1 @@
-copy bin\VsWaypointSharing.zip $env:appdata\VintageStory\Mods
+copy bin\Release\VsWaypointSharing*.zip $env:appdata\VintageStory\Mods

@@ -8,7 +8,6 @@ using Vintagestory.API.Server;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Config;
 using Vintagestory.GameContent;
-using System.Reflection;
 
 [assembly: ModInfo("VsWaypointSharing",
     Description = "Allows sharing waypoints to other users",
@@ -46,18 +45,19 @@ namespace VsWaypointSharing
         // Server side
         // TODO: Persist to save game?
         private Dictionary<IServerPlayer, SharingState> clientStates = new Dictionary<IServerPlayer, SharingState>();
-        private readonly int autoSyncThreadDelay = 60;
+        private readonly int autoSyncThreadDelay = 15;
 
         public override void StartClientSide(ICoreClientAPI api)
         {
             ClientApi = api ?? throw new ArgumentException("Client API is null");
 
-            ClientChannel = api.Network.RegisterChannel(_waypointSharingChannel)
+            ClientChannel = ClientApi.Network.RegisterChannel(_waypointSharingChannel)
                             .RegisterMessageType(typeof(WaypointShareMessage))
                             .RegisterMessageType(typeof(WaypointRevertMessage))
                             .RegisterMessageType(typeof(WaypointToggleAutoSyncMessage));
 
-            api.ChatCommands.GetOrCreate("ws").RequiresPrivilege(Privilege.chat)
+            ClientApi.ModLoader.GetModSystem<WorldMapManager>().RegisterMapLayer<WaypointMapLayerExtension>("waypoints");
+            ClientApi.ChatCommands.GetOrCreate("ws").RequiresPrivilege(Privilege.chat)
                 .BeginSubCommand("sync").HandleWith(OnShare).EndSubCommand()
                 .BeginSubCommand("revert").HandleWith(OnRevert).EndSubCommand()
                 .BeginSubCommand("autosync").HandleWith(OnAutoSync).EndSubCommand();
@@ -67,7 +67,7 @@ namespace VsWaypointSharing
         {
             ServerApi = api ?? throw new ArgumentException("Server API is null");
 
-            ServerChannel = api.Network.RegisterChannel(_waypointSharingChannel)
+            ServerChannel = ServerApi.Network.RegisterChannel(_waypointSharingChannel)
                 .RegisterMessageType(typeof(WaypointShareMessage))
                 .RegisterMessageType(typeof(WaypointRevertMessage))
                 .RegisterMessageType(typeof(WaypointToggleAutoSyncMessage))
@@ -75,6 +75,7 @@ namespace VsWaypointSharing
                 .SetMessageHandler<WaypointRevertMessage>(OnRevertRequested)
                 .SetMessageHandler<WaypointToggleAutoSyncMessage>(OnToggleAutoSyncRequested);
 
+            ServerApi.ModLoader.GetModSystem<WorldMapManager>().RegisterMapLayer<WaypointMapLayerExtension>("waypoints");
             ServerApi.Event.Timer(AutoSyncThreadFunction, autoSyncThreadDelay);
             ServerApi.Event.PlayerLeave += OnPlayerLeaveDisconnect;
             ServerApi.Event.PlayerDisconnect += OnPlayerLeaveDisconnect;
@@ -93,7 +94,9 @@ namespace VsWaypointSharing
                 if (sharingState.Value.isAutoSyncEnabled == true)
                 {
                     ServerApi.Logger.Notification($"Auto-syncing client {sharingState.Key.PlayerUID}");
-                    OnShareRequested(sharingState.Key, null);
+                    WaypointShareMessage wsm = new WaypointShareMessage();
+                    wsm.LogSuccess = false;
+                    OnShareRequested(sharingState.Key, wsm);
                 }
             }
         }
@@ -123,7 +126,7 @@ namespace VsWaypointSharing
         {
             // Get waypoint layer
             var mapManager = ServerApi.ModLoader.GetModSystem<WorldMapManager>();
-            var waypointLayer = mapManager.MapLayers.FirstOrDefault(x => x.GetType() == typeof(WaypointMapLayer)) as WaypointMapLayer;
+            var waypointLayer = mapManager.MapLayers.FirstOrDefault(x => x.GetType() == typeof(WaypointMapLayerExtension)) as WaypointMapLayerExtension;
             List<Waypoint> waypoints = waypointLayer.Waypoints;
 
             // To make sure we don't modify the waypoint during enumeration,
@@ -139,8 +142,7 @@ namespace VsWaypointSharing
                 }
             }
 
-            waypoints.RemoveAll(x => x.OwningPlayerUid == fromPlayer.PlayerUID && x.Title.StartsWith(_sharedWaypointPrefix));
-            // TODO: This won't sync to the user until they reopen the map because there is no RemoveWp private method to hijack in the WaypointMapLayer (see below)
+            waypointLayer.NoLogRemoveWp(fromPlayer, _sharedWaypointPrefix);
         }
 
         private void OnToggleAutoSyncRequested(IServerPlayer fromPlayer, WaypointToggleAutoSyncMessage msg)
@@ -169,15 +171,12 @@ namespace VsWaypointSharing
                 1. The player cannot easily purge waypoints from other players without losing their own
                 2. It is hard to tell if we are duplicating a waypoint. Currently, we use location only, so if another player
                     changes the icon or color, it won't update when the player requests a new update.
-                3. There is no clean way on the server-side to add a waypoint to a player because AddWp inside WaypointLayerMap
-                    is private. So we either send another message back to the client and have them do a hack by sending a chat command
-                    for each waypoint (yuck, plus we're rate limited). Or we reflect out the private function and call it anyway (double yuck, but ¯\_(ツ)_/¯).
         */
-        private void OnShareRequested(IServerPlayer fromPlayer, WaypointShareMessage _)
+        private void OnShareRequested(IServerPlayer fromPlayer, WaypointShareMessage wsm)
         {
             // Get waypoint layer
             var mapManager = ServerApi.ModLoader.GetModSystem<WorldMapManager>();
-            var waypointLayer = mapManager.MapLayers.FirstOrDefault(x => x.GetType() == typeof(WaypointMapLayer)) as WaypointMapLayer;
+            var waypointLayer = mapManager.MapLayers.FirstOrDefault(x => x.GetType() == typeof(WaypointMapLayerExtension)) as WaypointMapLayerExtension;
             List<Waypoint> waypoints = waypointLayer.Waypoints;
 
             // First clear out any previously synced waypoints so that if another player deletes a waypoint,
@@ -251,21 +250,18 @@ namespace VsWaypointSharing
             // Add each waypoint to the user. Doing so will send them the updated information so they display on their map correctly.
             foreach (var addWpArgs in waypointsToAdd)
             {
-                object[] argsAsObjectArray = new object[]
-                {
-                    addWpArgs.pos,
-                    addWpArgs.args,
-                    addWpArgs.player,
-                    addWpArgs.groupId,
-                    addWpArgs.icon,
-                    addWpArgs.pinned
-                };
-
-                // TODO: This has the unfortunate side effect of showing "Ok Waypoint Added" message in general log. Nothing we can do about that for now
-                typeof(WaypointMapLayer).GetMethod("AddWp", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(waypointLayer, argsAsObjectArray);
+                waypointLayer.NoLogAddWp(addWpArgs.pos,
+                            addWpArgs.args,
+                            addWpArgs.player,
+                            addWpArgs.groupId,
+                            addWpArgs.icon,
+                            addWpArgs.pinned);
             }
 
-            fromPlayer.SendMessage(GlobalConstants.InfoLogChatGroup, "Finished Sync", EnumChatType.CommandSuccess);
+            if (wsm.LogSuccess)
+            {
+                fromPlayer.SendMessage(GlobalConstants.InfoLogChatGroup, "Finished Sync", EnumChatType.CommandSuccess);
+            }
         }
     }
 }

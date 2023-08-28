@@ -3,6 +3,13 @@
         <TargetFramework>net7.0</TargetFramework>
     </PropertyGroup>
 
+    <PropertyGroup>
+        <ModVersionA>$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)\resources\modinfo.json")), `\"version\": \"[0-9]+\.[0-9]+\.[0-9]+\"`))</ModVersionA>
+        <ModVersion>$(ModVersionA.Split(":")[1].Trim(' ').Trim('&quot;`'))</ModVersion>
+    </PropertyGroup>
+
+    
+
     <ItemGroup>
         <Reference Include="VintagestoryAPI">
             <HintPath>C:\Users\jsmrc\AppData\Roaming\VintageStory\VintagestoryAPI.dll</HintPath>
@@ -27,7 +34,7 @@
         </Reference>
     </ItemGroup>
 
-    <ItemGroup Condition="'$(Configuration)' == 'Release'">
+    <ItemGroup>
         <None Include="LICENSE" CopyToOutputDirectory="PreserveNewest" />
         <None Include="resources/**">
             <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
@@ -36,7 +43,14 @@
     </ItemGroup>
 
     <Target Name="Package" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Release'">
-        <ZipDirectory DestinationFile="bin/$(TargetName).zip" SourceDirectory="$(TargetDir)"
+        <Message Importance="High" Text="Mod Version : $(ModVersion)"/>
+        <ZipDirectory DestinationFile="bin/Release/$(TargetName)-v$(ModVersion).zip" SourceDirectory="$(TargetDir)"
+            Overwrite="true" />
+    </Target>
+
+    <Target Name="Package" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Debug'">
+        <Message Importance="High" Text="Mod Version : $(ModVersion)"/>
+        <ZipDirectory DestinationFile="bin/Debug/$(TargetName)-v$(ModVersion).zip" SourceDirectory="$(TargetDir)"
             Overwrite="true" />
     </Target>
 </Project>
