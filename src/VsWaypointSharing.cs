@@ -126,7 +126,14 @@ namespace VsWaypointSharing
         {
             // Get waypoint layer
             var mapManager = ServerApi.ModLoader.GetModSystem<WorldMapManager>();
-            var waypointLayer = mapManager.MapLayers.FirstOrDefault(x => x.GetType() == typeof(WaypointMapLayerExtension)) as WaypointMapLayerExtension;
+            var waypointLayer = mapManager.MapLayers.FirstOrDefault(x => x is WaypointMapLayerExtension) as WaypointMapLayerExtension;
+
+            if (waypointLayer == null)
+            {
+                // Something has gone wrong
+                ServerApi.Logger.Notification($"VsWaypointSharing cannot function as the WaypointMapLayer is not WaypointMapLayerExtension class");
+            }
+
             List<Waypoint> waypoints = waypointLayer.Waypoints;
 
             // To make sure we don't modify the waypoint during enumeration,
@@ -176,7 +183,14 @@ namespace VsWaypointSharing
         {
             // Get waypoint layer
             var mapManager = ServerApi.ModLoader.GetModSystem<WorldMapManager>();
-            var waypointLayer = mapManager.MapLayers.FirstOrDefault(x => x.GetType() == typeof(WaypointMapLayerExtension)) as WaypointMapLayerExtension;
+            var waypointLayer = mapManager.MapLayers.FirstOrDefault(x => x is WaypointMapLayerExtension) as WaypointMapLayerExtension;
+
+            if (waypointLayer == null)
+            {
+                // Something has gone wrong
+                ServerApi.Logger.Notification($"VsWaypointSharing cannot function as the WaypointMapLayer is not WaypointMapLayerExtension class");
+            }
+
             List<Waypoint> waypoints = waypointLayer.Waypoints;
 
             // First clear out any previously synced waypoints so that if another player deletes a waypoint,
@@ -214,6 +228,8 @@ namespace VsWaypointSharing
                         else
                         {
                             ServerApi.Logger.Notification($"Cloning waypoint {w.Icon} to player {fromPlayer.ClientId}");
+
+                            // TODO: When cloning another user's tombstone, use their name for the name
 
                             // If we get here, the player doesn't already have the WP and it's not theirs to begin with
                             // Prepare the arguments for calling AddWp
