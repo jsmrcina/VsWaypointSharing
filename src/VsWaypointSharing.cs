@@ -230,7 +230,7 @@ namespace VsWaypointSharing
                                     pos = w.Position,
                                     args = cArgs,
                                     player = fromPlayer,
-                                    groupId = -1, // TODO: GroupId correct here?
+                                    groupId = GlobalConstants.InfoLogChatGroup,
                                     icon = w.Icon,
                                     pinned = false // Do not pin other players' waypoints by default
                                 });
