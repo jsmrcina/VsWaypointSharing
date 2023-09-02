@@ -8,6 +8,7 @@ using Vintagestory.API.Server;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Config;
 using Vintagestory.GameContent;
+using System.Reflection;
 
 [assembly: ModInfo("VsWaypointSharing",
     Description = "Allows sharing waypoints to other users",
@@ -47,9 +48,14 @@ namespace VsWaypointSharing
         private Dictionary<IServerPlayer, SharingState> clientStates = new Dictionary<IServerPlayer, SharingState>();
         private readonly int autoSyncThreadDelay = 15;
 
+        private bool debug = false;
+        private bool conflictingModErrorLogged = false;
+        
+
         public override void StartClientSide(ICoreClientAPI api)
-        {
+        {            
             ClientApi = api ?? throw new ArgumentException("Client API is null");
+            DetectDebugBuild(false);
 
             ClientChannel = ClientApi.Network.RegisterChannel(_waypointSharingChannel)
                             .RegisterMessageType(typeof(WaypointShareMessage))
@@ -66,6 +72,7 @@ namespace VsWaypointSharing
         public override void StartServerSide(ICoreServerAPI api)
         {
             ServerApi = api ?? throw new ArgumentException("Server API is null");
+            DetectDebugBuild(true);
 
             ServerChannel = ServerApi.Network.RegisterChannel(_waypointSharingChannel)
                 .RegisterMessageType(typeof(WaypointShareMessage))
@@ -81,6 +88,25 @@ namespace VsWaypointSharing
             ServerApi.Event.PlayerDisconnect += OnPlayerLeaveDisconnect;
         }
 
+        public void DetectDebugBuild(bool isServer)
+        {
+            var assemblyConfigurationAttribute = typeof(VsWaypointSharing).Assembly.GetCustomAttribute<AssemblyConfigurationAttribute>();
+            var buildConfigurationName = assemblyConfigurationAttribute?.Configuration;
+            if(isServer)
+            {
+                ServerApi.Logger.Notification($"Build of VsWaypointSharing is of type: {buildConfigurationName}");
+            }
+            else
+            {
+                ClientApi.Logger.Notification($"Build of VsWaypointSharing is of type: {buildConfigurationName}");
+            }
+
+            if (buildConfigurationName.Equals("Debug"))
+            {
+                debug = true;
+            }
+        }
+
         public void OnPlayerLeaveDisconnect(IServerPlayer player)
         {
             clientStates.Remove(player);
@@ -88,12 +114,19 @@ namespace VsWaypointSharing
 
         private void AutoSyncThreadFunction()
         {
-            ServerApi.Logger.Notification($"Auto-sync thread running");
+            if (debug)
+            {
+                ServerApi.Logger.Notification($"Auto-sync thread running");
+            }
+
             foreach (var sharingState in clientStates)
             {
                 if (sharingState.Value.isAutoSyncEnabled == true)
                 {
-                    ServerApi.Logger.Notification($"Auto-syncing client {sharingState.Key.PlayerUID}");
+                    if (debug)
+                    {
+                        ServerApi.Logger.Notification($"Auto-syncing client {sharingState.Key.PlayerUID}");
+                    }
                     WaypointShareMessage wsm = new WaypointShareMessage();
                     wsm.LogSuccess = false;
                     OnShareRequested(sharingState.Key, wsm);
@@ -131,7 +164,12 @@ namespace VsWaypointSharing
             if (waypointLayer == null)
             {
                 // Something has gone wrong
-                ServerApi.Logger.Notification($"VsWaypointSharing cannot function as the WaypointMapLayer is not WaypointMapLayerExtension class");
+                if (!conflictingModErrorLogged)
+                {
+                    ServerApi.Logger.Error($"VsWaypointSharing cannot function as the WaypointMapLayer is not WaypointMapLayerExtension class");
+                    conflictingModErrorLogged = true;
+                }
+                return;
             }
 
             List<Waypoint> waypoints = waypointLayer.Waypoints;
@@ -188,7 +226,12 @@ namespace VsWaypointSharing
             if (waypointLayer == null)
             {
                 // Something has gone wrong
-                ServerApi.Logger.Notification($"VsWaypointSharing cannot function as the WaypointMapLayer is not WaypointMapLayerExtension class");
+                if (!conflictingModErrorLogged)
+                {
+                    ServerApi.Logger.Error($"VsWaypointSharing cannot function as the WaypointMapLayer is not WaypointMapLayerExtension class");
+                    conflictingModErrorLogged = true;
+                }
+                return;
             }
 
             List<Waypoint> waypoints = waypointLayer.Waypoints;
@@ -223,11 +266,17 @@ namespace VsWaypointSharing
                         if (fromPlayerWaypoints.ContainsKey(w.Position))
                         {
                             // Don't clone this waypoint to the player, they already have a waypoint there
-                            ServerApi.Logger.Notification($"Skipping waypoint, player already has it");
+                            if (debug)
+                            {
+                                ServerApi.Logger.Notification($"Skipping waypoint, player already has it");
+                            }
                         }
                         else
                         {
-                            ServerApi.Logger.Notification($"Cloning waypoint {w.Icon} to player {fromPlayer.ClientId}");
+                            if (debug)
+                            {
+                                ServerApi.Logger.Notification($"Cloning waypoint {w.Icon} to player {fromPlayer.ClientId}");
+                            }
 
                             // TODO: When cloning another user's tombstone, use their name for the name
 
@@ -254,12 +303,18 @@ namespace VsWaypointSharing
                     }
                     else
                     {
-                        ServerApi.Logger.Notification($"Skipping waypoint to player {fromPlayer.ClientId} as it is a copy (a synced waypoint)");
+                        if (debug)
+                        {
+                            ServerApi.Logger.Notification($"Skipping waypoint to player {fromPlayer.ClientId} as it is a copy (a synced waypoint)");
+                        }
                     }
                 }
                 else
                 {
-                    ServerApi.Logger.Notification($"Skipping waypoint to player {fromPlayer.ClientId} as it's their own");
+                    if (debug)
+                    {
+                        ServerApi.Logger.Notification($"Skipping waypoint to player {fromPlayer.ClientId} as it's their own");
+                    }
                 }
             }
 

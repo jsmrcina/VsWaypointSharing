@@ -19,25 +19,6 @@
             ],
             "console": "internalConsole",
             "internalConsoleOptions": "openOnSessionStart",
-        },
-        {
-            "name": "Launch Client (.NET)",
-            "type": "coreclr",
-            "request": "launch",
-            "preLaunchTask": "Build (Debug)",
-            "program": "${env:VINTAGE_STORY}/Vintagestory.exe",
-            "args": [
-                "--playStyle",
-                "preset-surviveandbuild",
-                "--openWorld",
-                "modding test world",
-                "--addModPath",
-                "${workspaceFolder}/bin/Debug",
-                "--addOrigin",
-                "${workspaceFolder}/resources/assets",
-            ],
-            "console": "internalConsole",
-            "internalConsoleOptions": "openOnSessionStart",
         }
     ]
 }
