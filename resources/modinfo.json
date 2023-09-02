@@ -9,6 +9,6 @@
         "jsmrcina"
     ],
     "dependencies": {
-        "game": "1.18.8"
+        "game": "1.18.10"
     }
 }
