@@ -12,7 +12,6 @@ using System.Reflection;
 
 [assembly: ModInfo("VsWaypointSharing",
     Description = "Allows sharing waypoints to other users",
-    Website = "",
     Authors = new[] { "jsmrcina" })]
 
 namespace VsWaypointSharing

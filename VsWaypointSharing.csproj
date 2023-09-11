@@ -13,24 +13,25 @@
     <ItemGroup>
         <Reference Include="VintagestoryAPI">
             <HintPath>C:\Users\jsmrc\AppData\Roaming\VintageStory\VintagestoryAPI.dll</HintPath>
-            <Private>false</Private>
+            <Private>False</Private>
         </Reference>
         <Reference Include="VSEssentials">
             <HintPath>C:\Users\jsmrc\AppData\Roaming\VintageStory\Mods\VSEssentials.dll</HintPath>
-            <Private>false</Private>
+            <Private>False</Private>
         </Reference>
         <Reference Include="VSSurvivalMod">
             <HintPath>C:\Users\jsmrc\AppData\Roaming\VintageStory\Mods\VSSurvivalMod.dll</HintPath>
-            <Private>false</Private>
+            <Private>False</Private>
         </Reference>
         <Reference Include="VSCreativeMod">
             <HintPath>C:\Users\jsmrc\AppData\Roaming\VintageStory\Mods\VSCreativeMod.dll</HintPath>
-            <Private>false</Private>
+            <Private>False</Private>
         </Reference>
         <Reference
             Include="protobuf-net, Version=3.0.0.0, Culture=neutral, PublicKeyToken=257b51d87d2e4d67, processorArchitecture=MSIL">
             <SpecificVersion>False</SpecificVersion>
             <HintPath>C:\Users\jsmrc\AppData\Roaming\VintageStory\Lib\protobuf-net.dll</HintPath>
+            <Private>False</Private>
         </Reference>
     </ItemGroup>
 
@@ -42,15 +43,9 @@
         </None>
     </ItemGroup>
 
-    <Target Name="PackageRelease" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Release'">
+    <Target Name="PackageDebug" AfterTargets="PostBuildEvent">
         <Message Importance="High" Text="Mod Version : $(ModVersion)"/>
-        <ZipDirectory DestinationFile="bin/Release/$(TargetName)-v$(ModVersion).zip" SourceDirectory="$(TargetDir)"
-            Overwrite="true" />
-    </Target>
-
-    <Target Name="PackageDebug" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Debug'">
-        <Message Importance="High" Text="Mod Version : $(ModVersion)"/>
-        <ZipDirectory DestinationFile="bin/Debug/$(TargetName)-v$(ModVersion).zip" SourceDirectory="$(TargetDir)"
+        <ZipDirectory DestinationFile="bin/$(Configuration)/$(TargetName).zip" SourceDirectory="$(TargetDir)"
             Overwrite="true" />
     </Target>
 </Project>
