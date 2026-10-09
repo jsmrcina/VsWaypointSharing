@@ -1,10 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFramework>net7.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
+        <!-- The test project lives under tests/ and must not be compiled into the mod -->
+        <DefaultItemExcludes>$(DefaultItemExcludes);tests/**</DefaultItemExcludes>
     </PropertyGroup>
 
     <PropertyGroup>
-        <ModVersionA>$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)\resources\modinfo.json")), `\"version\": \"[0-9]+\.[0-9]+\.[0-9]+\"`))</ModVersionA>
+        <ModVersionA>$([System.Text.RegularExpressions.Regex]::Match($([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/resources/modinfo.json")), `\"version\": \"[0-9]+\.[0-9]+\.[0-9]+\"`))</ModVersionA>
         <ModVersion>$(ModVersionA.Split(":")[1].Trim(' ').Trim('&quot;`'))</ModVersion>
     </PropertyGroup>
 
@@ -12,27 +14,31 @@
 
     <ItemGroup>
         <Reference Include="VintagestoryAPI">
-            <HintPath>C:\Users\jsmrc\AppData\Roaming\VintageStory\VintagestoryAPI.dll</HintPath>
+            <HintPath>$(VINTAGE_STORY)/VintagestoryAPI.dll</HintPath>
             <Private>False</Private>
         </Reference>
         <Reference Include="VSEssentials">
-            <HintPath>C:\Users\jsmrc\AppData\Roaming\VintageStory\Mods\VSEssentials.dll</HintPath>
+            <HintPath>$(VINTAGE_STORY)/Mods/VSEssentials.dll</HintPath>
             <Private>False</Private>
         </Reference>
         <Reference Include="VSSurvivalMod">
-            <HintPath>C:\Users\jsmrc\AppData\Roaming\VintageStory\Mods\VSSurvivalMod.dll</HintPath>
+            <HintPath>$(VINTAGE_STORY)/Mods/VSSurvivalMod.dll</HintPath>
             <Private>False</Private>
         </Reference>
         <Reference Include="VSCreativeMod">
-            <HintPath>C:\Users\jsmrc\AppData\Roaming\VintageStory\Mods\VSCreativeMod.dll</HintPath>
+            <HintPath>$(VINTAGE_STORY)/Mods/VSCreativeMod.dll</HintPath>
             <Private>False</Private>
         </Reference>
         <Reference
             Include="protobuf-net, Version=3.0.0.0, Culture=neutral, PublicKeyToken=257b51d87d2e4d67, processorArchitecture=MSIL">
             <SpecificVersion>False</SpecificVersion>
-            <HintPath>C:\Users\jsmrc\AppData\Roaming\VintageStory\Lib\protobuf-net.dll</HintPath>
+            <HintPath>$(VINTAGE_STORY)/Lib/protobuf-net.dll</HintPath>
             <Private>False</Private>
         </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="VSTests" />
     </ItemGroup>
 
     <ItemGroup>
