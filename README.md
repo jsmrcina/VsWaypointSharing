@@ -25,6 +25,9 @@ Requires the .NET 10 SDK and Vintage Story 1.22.x installed locally (the build r
 
 1. Copy `VsWaypointSharing.zip` into `Mods` folder under `VintageStory`.
     - If you are running a hosted or dedicated server, you will need to add the mod there as well as it has a server-side component.
+    - Upgrading from 1.1.0 or older: **delete the old zip first.** 1.1.1 changed the mod ID from `VsWaypointSharing` to
+      `vswaypointsharing` (the mod DB requires lowercase IDs), so the game treats them as two different mods, loads
+      whichever comes first and fails to load the other.
 2. When playing, run these from chat (by default, chat opens with `T`):
     - `.ws sync` copies other players' waypoints onto your map (titled `<sync from: Name>...`, unpinned).
     - `.ws revert` removes the copies, leaving only your own waypoints.

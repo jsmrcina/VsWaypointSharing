@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Newtonsoft.Json.Linq;
+using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.MathTools;
 using Vintagestory.API.Util;
@@ -76,7 +77,9 @@ namespace VsWaypointSharing.Tests
             var modinfo = JObject.Parse(File.ReadAllText(Path.Combine(System.AppContext.BaseDirectory, "modinfo.json")));
 
             Assert.Equal("code", (string)modinfo["type"]);
-            Assert.Equal("VsWaypointSharing", (string)modinfo["modid"]);
+            // The game loads mixed-case IDs, but the mod DB rejects them ("The ModID of this mod is malformed")
+            Assert.True(ModInfo.IsValidModID((string)modinfo["modid"]), "modid must be lowercase a-z/0-9, starting with a letter");
+            Assert.Equal("vswaypointsharing", (string)modinfo["modid"]);
             Assert.Matches(@"^\d+\.\d+\.\d+$", (string)modinfo["version"]);
             Assert.Equal(GameVersion.OverallVersion, (string)modinfo["dependencies"]["game"]);
         }
