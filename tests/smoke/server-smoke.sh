@@ -11,6 +11,8 @@ set -euo pipefail
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 work="$(mktemp -d -t vsws-smoke.XXXXXX)"
 timeout_s="${SMOKE_TIMEOUT:-240}"
+# Not the default 42420, so it can run next to a real server; bound to localhost only
+port="${SMOKE_PORT:-42499}"
 
 cleanup() {
     [[ -n "${keepalive:-}" ]] && kill "$keepalive" 2>/dev/null || true
@@ -27,7 +29,7 @@ cp "$repo/bin/Release/VsWaypointSharing.zip" "$work/mods/"
 echo "== Starting dedicated server (timeout ${timeout_s}s)"
 mkfifo "$work/stdin"
 sleep infinity > "$work/stdin" & keepalive=$!   # holds the fifo open so the server console doesn't see EOF
-dotnet "$VINTAGE_STORY/VintagestoryServer.dll" --dataPath "$work/data" --addModPath "$work/mods" \
+dotnet "$VINTAGE_STORY/VintagestoryServer.dll" --dataPath "$work/data" --addModPath "$work/mods" --ip 127.0.0.1 --port "$port" \
     < "$work/stdin" > "$work/console.log" 2>&1 & server=$!
 
 for ((i = 0; i < timeout_s; i++)); do
@@ -46,7 +48,7 @@ fail=0
 check() {
     if grep -q -- "$2" "$log"; then echo "PASS: $1"; else echo "FAIL: $1 (no '$2' in server-main.log)"; fail=1; fi
 }
-check "mod loaded"                 "Mod 'VsWaypointSharing.zip' (VsWaypointSharing)"
+check "mod loaded"                 "Mod 'VsWaypointSharing.zip' (vswaypointsharing)"
 check "mod system started"         "Build of VsWaypointSharing is of type: Release"
 check "waypoint layer hooked"      "VsWaypointSharing: waypoint layer hooked"
 
