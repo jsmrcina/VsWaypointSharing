@@ -1,17 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using Vintagestory.API.Client;
-using Vintagestory.API.Common;
-using Vintagestory.API.Config;
-using Vintagestory.API.Datastructures;
-using Vintagestory.API.MathTools;
-using Vintagestory.API.Server;
-using Vintagestory.API.Util;
 using System.Reflection;
+using Vintagestory.API.Common;
+using Vintagestory.API.Server;
+using VsWaypointSharing.Sync;
 
 namespace Vintagestory.GameContent
 {
@@ -22,71 +14,44 @@ namespace Vintagestory.GameContent
     //
     public class WaypointMapLayerExtension : WaypointMapLayer
     {
+        // To get the waypoints to update immediately, we have to call two private methods in the base class, so we use reflection here.
+        // These are looked up once; the unit tests check they still exist after a game update.
+        internal static readonly MethodInfo RebuildMapComponentsMethod =
+            typeof(WaypointMapLayer).GetMethod("RebuildMapComponents", BindingFlags.NonPublic | BindingFlags.Instance, null, Type.EmptyTypes, null);
+        internal static readonly MethodInfo ResendWaypointsMethod =
+            typeof(WaypointMapLayer).GetMethod("ResendWaypoints", BindingFlags.NonPublic | BindingFlags.Instance, null, new[] { typeof(IServerPlayer) }, null);
+
         public WaypointMapLayerExtension(ICoreAPI api, IWorldMapManager mapSink) : base(api, mapSink)
         {
 
         }
 
-        // This is just AddWp from WaypointMapLayer.cs in the essentials mod but without logging on add
-        public void NoLogAddWp(Vec3d pos, CmdArgs args, IServerPlayer player, int groupId, string icon, bool pinned)
+        // Updates the player's synced copies in place (see WaypointSync.ApplySharedCopies) and sends them the result if anything changed
+        public bool SyncSharedCopies(IServerPlayer player, IEnumerable<Waypoint> copies)
         {
-            if (args.Length == 0)
+            bool changed = WaypointSync.ApplySharedCopies(Waypoints, player.PlayerUID, copies);
+            if (changed)
             {
-                player.SendMessage(groupId, Lang.Get("command-waypoint-syntax"), EnumChatType.CommandError);
-                return;
+                Refresh(player);
             }
-
-            string colorstring = args.PopWord();
-            string title = args.PopAll();
-
-            System.Drawing.Color parsedColor;
-
-            if (colorstring.StartsWith("#"))
-            {
-                try
-                {
-                    int argb = int.Parse(colorstring.Replace("#", ""), NumberStyles.HexNumber);
-                    parsedColor = System.Drawing.Color.FromArgb(argb);
-                }
-                catch (FormatException)
-                {
-                    player.SendMessage(groupId, Lang.Get("command-waypoint-invalidcolor"), EnumChatType.CommandError);
-                    return;
-                }
-            }
-            else
-            {
-                parsedColor = System.Drawing.Color.FromName(colorstring);
-            }
-
-            if (title == null || title.Length == 0)
-            {
-                player.SendMessage(groupId, Lang.Get("command-waypoint-notext"), EnumChatType.CommandError);
-                return;
-            }
-
-            Waypoint waypoint = new Waypoint()
-            {
-                Color = parsedColor.ToArgb() | (255 << 24),
-                OwningPlayerUid = player.PlayerUID,
-                Position = pos,
-                Title = title,
-                Icon = icon,
-                Pinned = pinned,
-                Guid = Guid.NewGuid().ToString()
-            };
-
-            AddWaypoint(waypoint, player);
+            return changed;
         }
 
-        public void NoLogRemoveWp(IServerPlayer player, string sharedWaypointPrefix)
+        public void RemoveSharedCopies(IServerPlayer player)
         {
-            Waypoints.RemoveAll(x => x.OwningPlayerUid == player.PlayerUID && x.Title.StartsWith(sharedWaypointPrefix));
+            Waypoints.RemoveAll(x => WaypointSync.IsSharedCopyOwnedBy(x, player.PlayerUID));
+            Refresh(player);
+        }
 
-            // To get the waypoints to update immediately, we have to call two private methods in the base class, so we use reflection here
-            typeof(WaypointMapLayer).GetMethod("RebuildMapComponents", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(this, null);
-            object[] argsAsObjectArray = new object[] { player };
-            typeof(WaypointMapLayer).GetMethod("ResendWaypoints", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(this, argsAsObjectArray);
+        private void Refresh(IServerPlayer player)
+        {
+            if (RebuildMapComponentsMethod == null || ResendWaypointsMethod == null)
+            {
+                throw new MissingMethodException("WaypointMapLayer.RebuildMapComponents/ResendWaypoints not found; the game API has changed");
+            }
+
+            RebuildMapComponentsMethod.Invoke(this, null);
+            ResendWaypointsMethod.Invoke(this, new object[] { player });
         }
     }
 }
